@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Generador de Quiniela</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.4/jspdf.min.js"></script>
+<style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+ 
+
+        h2 {
+            text-align: center;
+            padding: 20px;
+            background-color: #333;
+            color: white;
+        }
+
+ 
+
+        #configuracionForm {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px auto;
+            max-width: 600px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+        }
+
+ 
+
+        #probabilidadesList {
+            list-style: none;
+            padding: 0;
+        }
+
+ 
+
+        #probabilidadesList li {
+            margin-bottom: 10px;
+        }
+
+ 
+
+        button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+ 
+
+        button:hover {
+            background-color: #555;
+        }
+
+ 
+
+        #resultados {
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+ 
+
+        #medias {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+
+ 
+
+        .conjunto {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+ 
+
+        h2 {
+            text-align: center;
+            padding: 20px;
+            background-color: #333;
+            color: white;
+        }
+
+ 
+
+        /* Estilos adicionales si es necesario */
+
+
+ 
+
+    </style>
+</head>
+<body>
+<h2>Generador de Quiniela</h2>
+
+ 
+
+    <form id="configuracionForm">
+<h3>Configuración:</h3>
+
+<label for="cantidadQuinielas">Cantidad de Quinielas: </label>
+<input type="number" id="cantidadQuinielas" min="1" value="1"><br>
+
+<label for="cantidadPartidos">Cantidad de Partidos: </label>
+<input type="number" id="cantidadPartidos" min="1" value="5"><br>
+
+<label for="cantidadConjuntos">Cantidad de Conjuntos de Probabilidades por Partido: </label>
+<input type="number" id="cantidadConjuntos" min="1" value="3"><br>
+
+ 
+
+        <h3>Ingresa las probabilidades para cada resultado:</h3>
+<ul id="probabilidadesList"></ul>
+
+<button type="button" onclick="agregarProbabilidades()">Agregar Probabilidades</button>
+<button type="button" onclick="generarQuinielas()">Generar Quinielas</button>
+<button type="button" onclick="eliminarDuplicados()">Eliminar Duplicados</button>
+<button type="button" onclick="resetearInterfaz()">Resetear Interfaz</button>
+<button type="button" onclick="imprimirQuinielas()">Imprimir quinielas</button>          
+<button type="button" onclick="mostrarListaArchivos()">Buscar archivo</button>  
+<label id="labelentreencuentros">Cantidad de Conjuntos de Probabilidades por Partido: </label>
+</form>
+
+<h3>Resultados de las Quinielas:</h3>
+<div id="resultados"></div>
+
+<h3>Medias de Probabilidades:</h3>
+<div id="medias"></div>
+<h3>Archivos Guardados:</h3>
+<div id="listaArchivos"></div>
+
+ 
+
+<h3>Datos del Archivo Seleccionado:</h3>
+<pre id="datosArchivo"></pre>
+<script>
+        let numPartidos = 5;
+        let numConjuntosProbabilidades = 3;
+function mostrarListaArchivos() {
+    const listaArchivosDiv = document.getElementById('listaArchivos');
+    listaArchivosDiv.innerHTML = '';
+
+ 
+
+    // Iterar sobre las claves en localStorage para obtener los nombres de los archivos
+    for (let i = 0; i < localStorage.length; i++) {
+        const clave = localStorage.key(i);
+        const nombreArchivo = clave.split('-')[0]; // Obtener el nombre del archivo
+
+ 
+
+        const archivoLink = document.createElement('a');
+        archivoLink.textContent = nombreArchivo;
+        archivoLink.href = '#'; // Usamos un enlace con # para que sea clickeable
+        archivoLink.onclick = function() {
+            // Mostrar los datos del archivo al hacer clic en el enlace
+            mostrarDatosArchivo(clave);
+        };
+
+ 
+
+        const br = document.createElement('br');
+        listaArchivosDiv.appendChild(archivoLink);
+        listaArchivosDiv.appendChild(br);
+    }
+}
+function calcularProbabilidades(nombreConjunto,resultados) {
+    const form2 = document.getElementById('configuracionForm');
+     //   const formData2 = new FormData(form);
+
+ 
+
+    // Obtener los elementos de entrada de probabilidad para este conjunto
+
+ 
+
+ 
+
+     const probabilidad1Input = document.getElementById(`${nombreConjunto}`);
+    const probabilidadXInput = document.getElementById(`${nombreConjunto}`);
+    const probabilidad2Input = document.getElementById(`${nombreConjunto}`);
+
+ 
+
+    // Obtener los elementos de entrada de estadísticas
+    const totalJugadosInput = parseFloat(prompt('Ingresa el total de juegos jugados:'));
+    const ganadosEquipo1Input = parseFloat(prompt('Ingresa el total de juegos ganados por el Equipo 1:'));
+    const empatadosInput = parseFloat(prompt('Ingresa el total de juegos empatados:'));
+    const ganadosEquipo2Input = parseFloat(prompt('Ingresa el total de juegos ganados por el Equipo 2:'));
+
+ 
+
+    // Calcular las probabilidades en base a las estadísticas ingresadas
+    const probabilidad1 = (ganadosEquipo1Input * 100) / totalJugadosInput / 100;
+    const probabilidadX = (empatadosInput * 100) / totalJugadosInput / 100;
+    const probabilidad2 = (ganadosEquipo2Input * 100) / totalJugadosInput / 100;
+alert("Probabilidad de 1: "  + probabilidad1.toFixed(2).toString() + "Probabilidad de x: " +  probabilidadX.toFixed(2).toString() + "Probabilidad de 2: " +  probabilidad2.toFixed(2).toString()) ;
+resultados = probabilidad1.toFixed(2).toString();
+//alert(probabilidadX.toFixed(2).toString());
+//alert(probabilidad2.toFixed(2).toString());
+    // Actualizar los valores de los elementos de entrada de probabilidad
+// probabilidad1Input.value = probabilidad1.toFixed(2);
+//   probabilidadXInput.value = probabilidadX.toFixed(2);
+//   probabilidad2Input.value = probabilidad2.toFixed(2);
+
+ 
+
+ 
+
+}
+// Función para mostrar los datos de un archivo seleccionado
+function mostrarDatosArchivo(clave) {
+    const datosArchivoDiv = document.getElementById('datosArchivo');
+    const datos = JSON.parse(localStorage.getItem(clave));
+    datosArchivoDiv.innerHTML = JSON.stringify(datos, null, 2);
+}
+        function resetearInterfaz() {
+            location.reload();
+        }
+
+ 
+
+        function agregarProbabilidades() {
+            numPartidos = parseInt(document.getElementById('cantidadPartidos').value);
+            numConjuntosProbabilidades = parseInt(document.getElementById('cantidadConjuntos').value);
+            const probabilidadesList = document.getElementById('probabilidadesList');
+
+ 
+
+            probabilidadesList.innerHTML = '';
+
+ 
+
+      for (let i = 0; i < numPartidos; i++) {
+    const partidoLi = document.createElement('li');
+    partidoLi.innerHTML = `Partido ${i + 1}:`;
+
+ 
+
+    for (let j = 0; j < numConjuntosProbabilidades; j++) {
+        const conjuntoDiv = document.createElement('div');
+        conjuntoDiv.className = 'conjunto';
+        const label = document.createElement('label');
+        label.innerHTML = `Partido ${i + 1}, Conjunto ${j + 1}: `;
+        label.appendChild(document.createTextNode('1'));
+        const probabilidad1Input = document.createElement('input');
+        probabilidad1Input.type = 'number';
+        probabilidad1Input.value = '0.33';
+        probabilidad1Input.step = '0.01';
+        probabilidad1Input.min = '0';
+        probabilidad1Input.max = '1';
+        probabilidad1Input.name = `probabilidad1_${i}_${j}`;
+        label.appendChild(probabilidad1Input);
+        label.appendChild(document.createTextNode(' X'));
+        const probabilidadXInput = document.createElement('input');
+        probabilidadXInput.type = 'number';
+        probabilidadXInput.value = '0.33';
+        probabilidadXInput.step = '0.01';
+        probabilidadXInput.min = '0';
+        probabilidadXInput.max = '1';
+        probabilidadXInput.name = `probabilidadX_${i}_${j}`;
+        label.appendChild(probabilidadXInput);
+        label.appendChild(document.createTextNode(' 2'));
+        const probabilidad2Input = document.createElement('input');
+        probabilidad2Input.type = 'number';
+        probabilidad2Input.value = '0.33';
+        probabilidad2Input.step = '0.01';
+        probabilidad2Input.min = '0';
+        probabilidad2Input.max = '1';
+        probabilidad2Input.name = `probabilidad2_${i}_${j}`;
+        label.appendChild(probabilidad2Input);
+
+        // Crear el botón "Calcular Probabilidades"
+        const calcularButton = document.createElement('button');
+        calcularButton.type = 'button';
+        calcularButton.textContent = 'Calcular Probabilidades';
+        calcularButton.onclick = function() {
+            calcularProbabilidades(`partido_${i}_${j}`,resultados);
+        };
+
+ 
+
+        conjuntoDiv.appendChild(label);
+        conjuntoDiv.appendChild(calcularButton); // Agregar el botón
+        partidoLi.appendChild(conjuntoDiv);
+    }
+
+ 
+
+    probabilidadesList.appendChild(partidoLi);
+}
+
+ 
+
+ 
+
+        }
+    function resetearInterfaz() {
+        location.reload(); // Esto recarga la página
+    }
+
+ 
+
+    function agregarProbabilidades2() {
+        numPartidos = parseInt(document.getElementById('cantidadPartidos').value);
+        numConjuntosProbabilidades = parseInt(prompt('Ingresa la cantidad de conjuntos de probabilidades por partido:', 1));
+        const probabilidadesList = document.getElementById('probabilidadesList');
+
+ 
+
+        probabilidadesList.innerHTML = '';
+
+ 
+
+        for (let i = 0; i < numPartidos; i++) {
+            for (let j = 0; j < numConjuntosProbabilidades; j++) {
+                const conjuntoDiv = document.createElement('div');
+                conjuntoDiv.classList.add('conjuntoProbabilidades');
+
+ 
+
+                const label = document.createElement('label');
+                label.innerHTML = `Partido ${i + 1}, Conjunto ${j + 1}: ` +
+                    `1<input type="number" value="0.33" step="0.01" min="0" max="1" name="probabilidad1_${i}_${j}"> ` +
+                    `X<input type="number" value="0.33" step="0.01" min="0" max="1" name="probabilidadX_${i}_${j}"> ` +
+                    `2<input type="number" value="0.33" step="0.01" min="0" max="1" name="probabilidad2_${i}_${j}">`;
+
+ 
+
+                conjuntoDiv.appendChild(label);
+                probabilidadesList.appendChild(conjuntoDiv);
+            }
+        }
+    }
+
+ 
+
+    function eliminarDuplicados() {
+        const resultadosDiv = document.getElementById('resultados');
+        const resultadosTexto = resultadosDiv.textContent;
+
+ 
+
+        // Dividir los resultados en líneas y eliminar espacios en blanco
+        const resultadosArray = resultadosTexto.split('\n').map(resultado => resultado.trim());
+
+ 
+
+        // Crear un conjunto (Set) para almacenar filas únicas
+        const resultadosUnicos = new Set();
+
+ 
+
+        // Filtrar las filas únicas y agregarlas al conjunto
+        resultadosArray.forEach(fila => resultadosUnicos.add(fila));
+
+ 
+
+        // Convertir el conjunto nuevamente en un array
+        const resultadosUnicosArray = Array.from(resultadosUnicos);
+
+ 
+
+        // Crear un nuevo div para los resultados únicos
+        const resultadosUnicosDiv = document.getElementById('resultadosUnicos');
+
+ 
+
+        // Actualizar el nuevo div con las filas únicas en líneas separadas
+        resultadosUnicosDiv.textContent = resultadosUnicosArray.join('\n');
+    }
+
+ 
+
+   
+    // ... (código anterior) ...
+
+ 
+
+    function generarQuinielas() {
+        const form = document.getElementById('configuracionForm');
+        const formData = new FormData(form);
+
+ 
+
+        const cantidadQuinielas = parseInt(document.getElementById('cantidadQuinielas').value);
+        const resultadosTotales = new Set(); // Usamos un Set para almacenar resultados únicos
+
+ 
+
+        for (let j = 0; j < cantidadQuinielas; j++) {
+            const resultados = [];
+
+ 
+
+            for (let i = 0; i < numPartidos; i++) {
+                const probabilidades1 = [];
+                const probabilidadesX = [];
+                const probabilidades2 = [];
+
+ 
+
+                for (let k = 0; k < numConjuntosProbabilidades; k++) {
+                    const probabilidad1 = parseFloat(formData.get(`probabilidad1_${i}_${k}`));
+                    const probabilidadX = parseFloat(formData.get(`probabilidadX_${i}_${k}`));
+                    const probabilidad2 = parseFloat(formData.get(`probabilidad2_${i}_${k}`));
+
+ 
+
+                    probabilidades1.push(probabilidad1);
+                    probabilidadesX.push(probabilidadX);
+                    probabilidades2.push(probabilidad2);
+                }
+
+ 
+
+                // Calcular la media de las probabilidades para cada opción
+                const media1 = probabilidades1.reduce((a, b) => a + b, 0) / numConjuntosProbabilidades;
+                const mediaX = probabilidadesX.reduce((a, b) => a + b, 0) / numConjuntosProbabilidades;
+                const media2 = probabilidades2.reduce((a, b) => a + b, 0) / numConjuntosProbabilidades;
+
+ 
+
+                const totalProbabilidades = media1 + mediaX + media2;
+                const randomValue = Math.random() * totalProbabilidades;
+
+ 
+
+                if (randomValue < media1) {
+                    resultados.push('1');
+                } else if (randomValue < media1 + mediaX) {
+                    resultados.push('X');
+                } else {
+                    resultados.push('2');
+                }
+
+ 
+
+                // Agregar la media al resultado
+               // resultados.push(`Media: 1(${media1.toFixed(2)}) X(${mediaX.toFixed(2)}) 2(${media2.toFixed(2)})`);
+            }
+
+ 
+
+            resultadosTotales.add(resultados.join(', ')); // Agregar resultado único al conjunto
+        }
+
+ 
+
+        // Convertir el conjunto a un array y mostrar los resultados únicos
+        const resultadosUnicos = [...resultadosTotales];
+       guardarResultadosfehahora(resultadosUnicos)
+        document.getElementById('resultados').innerHTML = resultadosUnicos.join('<br>');
+     const medias = calcularMedias(formData);
+guardarPDFConNombre(resultados);
+            // Mostrar las medias
+            const mediasDiv = document.getElementById('medias');
+            mediasDiv.innerHTML = `<h3>Medias de Probabilidades:</h3>${medias}`;
+    }
+
+ 
+
+function calcularMedias(formData) {
+    let mediasHtml = '';
+
+ 
+
+    for (let i = 0; i < numPartidos; i++) {
+        mediasHtml += `<div class="conjunto">Media: `;
+        let sumaProbabilidad1 = 0;
+        let sumaProbabilidadX = 0;
+        let sumaProbabilidad2 = 0;
+
+ 
+
+        for (let j = 0; j < numConjuntosProbabilidades; j++) {
+            const probabilidad1 = parseFloat(formData.get(`probabilidad1_${i}_${j}`));
+            const probabilidadX = parseFloat(formData.get(`probabilidadX_${i}_${j}`));
+            const probabilidad2 = parseFloat(formData.get(`probabilidad2_${i}_${j}`));
+
+ 
+
+            sumaProbabilidad1 += probabilidad1;
+            sumaProbabilidadX += probabilidadX;
+            sumaProbabilidad2 += probabilidad2;
+        }
+
+ 
+
+        const mediaProbabilidad1 = sumaProbabilidad1 / numConjuntosProbabilidades;
+        const mediaProbabilidadX = sumaProbabilidadX / numConjuntosProbabilidades;
+        const mediaProbabilidad2 = sumaProbabilidad2 / numConjuntosProbabilidades;
+
+ 
+
+        mediasHtml += `1(${mediaProbabilidad1.toFixed(2)}) X(${mediaProbabilidadX.toFixed(2)}) 2(${mediaProbabilidad2.toFixed(2)}) `;
+        mediasHtml += `</div>`;
+    }
+
+ 
+
+    return mediasHtml;
+}
+    function agregarProbabilidades3() {
+        numPartidos = parseInt(document.getElementById('cantidadPartidos').value);
+        numConjuntosProbabilidades = parseInt(document.getElementById('cantidadConjuntos').value);
+        const probabilidadesList = document.getElementById('probabilidadesList');
+
+ 
+
+        probabilidadesList.innerHTML = '';
+
+ 
+
+        for (let i = 0; i < numPartidos; i++) {
+            const partidoLi = document.createElement('li');
+            partidoLi.innerHTML = `Partido ${i + 1}:`;
+
+            for (let j = 0; j < numConjuntosProbabilidades; j++) {
+                const conjuntoLi = document.createElement('li');
+                const label = document.createElement('label');
+                label.innerHTML = `Conjunto ${j + 1}: `;
+                label.appendChild(document.createTextNode('1'));
+                const probabilidad1Input = document.createElement('input');
+                probabilidad1Input.type = 'number';
+                probabilidad1Input.value = '0.33';
+                probabilidad1Input.step = '0.01';
+                probabilidad1Input.min = '0';
+                probabilidad1Input.max = '1';
+                probabilidad1Input.name = `probabilidad1_${i}_${j}`;
+                label.appendChild(probabilidad1Input);
+                label.appendChild(document.createTextNode(' X'));
+                const probabilidadXInput = document.createElement('input');
+                probabilidadXInput.type = 'number';
+                probabilidadXInput.value = '0.33';
+                probabilidadXInput.step = '0.01';
+                probabilidadXInput.min = '0';
+                probabilidadXInput.max = '1';
+                probabilidadXInput.name = `probabilidadX_${i}_${j}`;
+                label.appendChild(probabilidadXInput);
+                label.appendChild(document.createTextNode(' 2'));
+                const probabilidad2Input = document.createElement('input');
+                probabilidad2Input.type = 'number';
+                probabilidad2Input.value = '0.33';
+                probabilidad2Input.step = '0.01';
+                probabilidad2Input.min = '0';
+                probabilidad2Input.max = '1';
+                probabilidad2Input.name = `probabilidad2_${i}_${j}`;
+                label.appendChild(probabilidad2Input);
+                conjuntoLi.appendChild(label);
+                partidoLi.appendChild(conjuntoLi);
+            }
+
+ 
+
+            probabilidadesList.appendChild(partidoLi);
+        }
+    }
+    function imprimirQuinielas() {
+  const doc = new jsPDF();
+
+ 
+
+    // Obtener los resultados de las quinielas
+    const resultadosDiv = document.getElementById('resultados');
+    const resultadosTexto = resultadosDiv.textContent;
+
+ 
+
+    // Dividir los resultados en líneas (cada línea corresponde a un partido)
+    const resultadosPorPartido = resultadosTexto.split('\n').map(linea => linea.trim());
+
+ 
+
+    // Configurar posición inicial para escribir en el PDF
+    let posY = 10;
+
+ 
+
+    // Iterar sobre los resultados y agregarlos al PDF (un partido por fila)
+    resultadosPorPartido.forEach(partido => {
+        doc.text(10, posY, partido);
+        posY += 10; // Ajustar la posición vertical para la siguiente fila
+    });
+
+ 
+
+    // Guardar o mostrar el PDF (dependiendo de tus necesidades)
+    // doc.save('quinielas.pdf'); // Guardar el PDF con un nombre específico
+    doc.output('dataurlnewwindow'); // Abrir el PDF en una nueva ventana del navegador
+}
+function guardarPDFConNombre(resultados) {
+
+}
+
+ 
+
+//function guardarResultadosfehahora(nombreArchivo,resultados) {
+//    const fecha = new Date();
+//   localStorage.setItem(nombreArchivo, JSON.stringify(resultados));
+//}
+
+ 
+
+ 
+
+function guardarResultadosfehahora(resultados) {
+const fecha = new Date();
+   // Solicitar al usuario que ingrese un nombre para el archivo
+    const nombreArchivo = prompt('Por favor, ingresa un nombre para el archivo PDF:');
+
+ 
+
+    // Verificar si se ingresó un nombre y no es nulo o vacío
+    if (nombreArchivo !== null && nombreArchivo.trim() !== '') {
+        // Llamar a la función para guardar el PDF con el nombre especificado
+      //  guardarResultadosfehahora(nombreArchivo,resultados);
+    }
+     else {
+        // El usuario no ingresó un nombre válido
+        alert('Nombre de archivo no válido. Por favor, ingresa un nombre.');
+    }
+    localStorage.setItem(nombreArchivo + "-"  + fecha, JSON.stringify(resultados));
+
+ 
+
+}
+
+ 
+
+</script>
+
+ 
+
+</body>
+</html>

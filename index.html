@@ -31,16 +31,24 @@
     <button onclick="mostrarListaArchivos()">Cargar y Buscar</button>
     <div id="resultados">
         <h3>Quinielas con Aciertos:</h3>
-        <table>
+         <table>
             <thead>
                 <tr>
-                    <th>Total</th> <!-- Nueva columna para el total -->
                     <th>Quiniela</th>
                     <th>Resultado</th>
                     <th>Aciertos</th>
+                    <th>Acumulado</th> <!-- Nueva columna para acumulación -->
                 </tr>
             </thead>
             <tbody id="coincidenciasList"></tbody>
+            <tfoot> <!-- Agregar una fila de resumen al final de la tabla -->
+                <tr>
+                    <td>Total</td>
+                    <td></td>
+                    <td></td>
+                    <td id="acumuladoColumn"></td> <!-- Aquí se mostrará el acumulado -->
+                </tr>
+            </tfoot>
         </table>
     </div>
 
@@ -136,6 +144,8 @@
 
                 coincidenciasList.appendChild(tr);
             }
+            // Actualizar la fila de resumen de acumulación
+            mostrarAcumulado();
         }
 
         function mostrarDatosArchivo(clave) {
@@ -154,7 +164,8 @@
 
             const datos = JSON.parse(localStorage.getItem(clave));;
             // Aquí puedes cargar el archivo JSON y buscar coincidencias en los
-                      datos = [ "1, X, 1, 1, 1, 2, 2, 2, 2, X, 1, X, X, 2",
+                      if (datos == null){
+                const      datos = [ "1, X, 1, 1, 1, 2, 2, 2, 2, X, 1, X, X, 2",
   "1, 1, 1, 1, X, 1, 1, 2, 2, 1, 1, 1, 1, 1",
   "X, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1",
   "1, 1, X, 1, X, 1, 1, 2, 2, X, 1, X, 1, X",
@@ -193,7 +204,7 @@
   "1, X, X, 1, X, 1, X, 2, 1, 1, X, 2, 2, 2",
   "1, X, 1, 1, 2, 1, X, 1, 2, X, 2, 2, 2, 1",
   "1, 2, 1, 1, X, 1, 1, 1, X, 1, 1, X, 1, 1",
-  "1, 1, 1, 1, X, 2, 1, 2, 2, 1, 1, 2, 1, 2"];
+  "1, 1, 1, 1, X, 2, 1, 2, 2, 1, 1, 2, 1, 2"];}
             var resultados = datos;
 
             const coincidencias = [];
@@ -215,6 +226,17 @@
             }
 
             return coincidencias;
+        }
+        function mostrarAcumulado() {
+            const acumuladoColumn = document.getElementById('acumuladoColumn');
+            acumuladoColumn.innerHTML = '';
+
+            // Mostrar el acumulado en la fila de resumen
+            for (const [aciertos, cantidad] of Object.entries(acumulado)) {
+                const acumuladoTexto = document.createElement('div');
+                acumuladoTexto.textContent = `${cantidad} quinielas con ${aciertos} aciertos`;
+                acumuladoColumn.appendChild(acumuladoTexto);
+            }
         }
     </script>
 </body>

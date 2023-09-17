@@ -162,9 +162,9 @@
             // Dividir los patrones en un arreglo
             const patronesBusqueda = patronesTexto.split(',').map(patron => patron.trim());
 
-            const datos = JSON.parse(localStorage.getItem(clave));;
+           // const datos = JSON.parse(localStorage.getItem(clave));;
             // Aquí puedes cargar el archivo JSON y buscar coincidencias en los
-                      if (datos == null){
+                    
                 const      datos = [ "1, X, 1, 1, 1, 2, 2, 2, 2, X, 1, X, X, 2",
   "1, 1, 1, 1, X, 1, 1, 2, 2, 1, 1, 1, 1, 1",
   "X, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1",
@@ -204,7 +204,7 @@
   "1, X, X, 1, X, 1, X, 2, 1, 1, X, 2, 2, 2",
   "1, X, 1, 1, 2, 1, X, 1, 2, X, 2, 2, 2, 1",
   "1, 2, 1, 1, X, 1, 1, 1, X, 1, 1, X, 1, 1",
-  "1, 1, 1, 1, X, 2, 1, 2, 2, 1, 1, 2, 1, 2"];}
+  "1, 1, 1, 1, X, 2, 1, 2, 2, 1, 1, 2, 1, 2"];
             var resultados = datos;
 
             const coincidencias = [];

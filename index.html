@@ -28,12 +28,13 @@
     <label for="patrones">Ingresa los patrones de búsqueda (separados por comas y espacios):</label>
     <input type="text" id="patrones" placeholder="Ejemplo: X, X, X, 1, 2, 2, 1, 2, 1, 2, X, 2">
     <button onclick="buscarCoincidencias()">Buscar</button>
-<button onclick="mostrarListaArchivos()">Cargar y Buscar</button>
+    <button onclick="mostrarListaArchivos()">Cargar y Buscar</button>
     <div id="resultados">
         <h3>Quinielas con Aciertos:</h3>
         <table>
             <thead>
                 <tr>
+                    <th>Total</th> <!-- Nueva columna para el total -->
                     <th>Quiniela</th>
                     <th>Resultado</th>
                     <th>Aciertos</th>
@@ -43,96 +44,117 @@
         </table>
     </div>
 
+    <h3>Archivos Guardados:</h3>
+    <div id="listaArchivos"></div>
 
-  <h3>Archivos Guardados:</h3>
-<div id="listaArchivos"></div>
+    <h3>Datos del Archivo Seleccionado:</h3>
+    <pre id="datosArchivo"></pre>
 
-<h3>Datos del Archivo Seleccionado:</h3>
-<pre id="datosArchivo"></pre>
     <script>
         let VCLAVE = '';
         let numPartidos = 5;
         let numConjuntosProbabilidades = 3;
-function mostrarListaArchivos() {
-    const listaArchivosDiv = document.getElementById('listaArchivos');
-    listaArchivosDiv.innerHTML = '';
+        let acumulado = {}; // Objeto para mantener el registro de acumulación
 
-    // Iterar sobre las claves en localStorage para obtener los nombres de los archivos
-    for (let i = 0; i < localStorage.length; i++) {
-        const clave = localStorage.key(i);
-        const nombreArchivo = clave.split('-')[0]; // Obtener el nombre del archivo
+        function mostrarListaArchivos() {
+            const listaArchivosDiv = document.getElementById('listaArchivos');
+            listaArchivosDiv.innerHTML = '';
 
-        const archivoLink = document.createElement('a');
-        archivoLink.textContent = nombreArchivo;
-        archivoLink.href = '#'; // Usamos un enlace con # para que sea clickeable
-        archivoLink.onclick = function() {
-            // Mostrar los datos del archivo al hacer clic en el enlace
-            mostrarDatosArchivo(clave);
-            VCLAVE = clave;
-        };
+            // Iterar sobre las claves en localStorage para obtener los nombres de los archivos
+            for (let i = 0; i < localStorage.length; i++) {
+                const clave = localStorage.key(i);
+                const nombreArchivo = clave.split('-')[0]; // Obtener el nombre del archivo
 
-        const br = document.createElement('br');
-        listaArchivosDiv.appendChild(archivoLink);
-        listaArchivosDiv.appendChild(br);
-    }
-}
+                const archivoLink = document.createElement('a');
+                archivoLink.textContent = nombreArchivo;
+                archivoLink.href = '#'; // Usamos un enlace con # para que sea clickeable
+                archivoLink.onclick = function () {
+                    // Mostrar los datos del archivo al hacer clic en el enlace
+                    mostrarDatosArchivo(clave);
+                    VCLAVE = clave;
+                };
+
+                const br = document.createElement('br');
+                listaArchivosDiv.appendChild(archivoLink);
+                listaArchivosDiv.appendChild(br);
+            }
+        }
+
         function cargarYBuscar() {
-    const patronesDesdeLocalStorage = cargarListaDesdeLocalStorage();
-    if (patronesDesdeLocalStorage) {
-        buscarCoincidenciasEnArchivo(patronesDesdeLocalStorage);
-    } else {
-        alert("No se encontró ninguna lista de patrones en el almacenamiento local.");
-    }
-}
+            const patronesDesdeLocalStorage = cargarListaDesdeLocalStorage();
+            if (patronesDesdeLocalStorage) {
+                buscarCoincidenciasEnArchivo(patronesDesdeLocalStorage);
+            } else {
+                alert("No se encontró ninguna lista de patrones en el almacenamiento local.");
+            }
+        }
 
         function buscarCoincidencias() {
             const patronesInput = document.getElementById('patrones');
-              const Larchivos = document.getElementById('listaArchivos'); 
+            const Larchivos = document.getElementById('listaArchivos');
             const patronesTexto = patronesInput.value;
-
 
             // Dividir los patrones en un arreglo
             const patronesBusqueda = patronesTexto.split(',').map(patron => patron.trim());
 
             // Llamar a la función que busca coincidencias
-            const coincidenciasEncontradas = buscarCoincidenciasEnArchivo(patronesBusqueda,VCLAVE);
+            const coincidenciasEncontradas = buscarCoincidenciasEnArchivo(patronesBusqueda, VCLAVE);
 
             // Mostrar las coincidencias en la tabla
             const coincidenciasList = document.getElementById('coincidenciasList');
             coincidenciasList.innerHTML = '';
 
+            // Reiniciar el objeto de acumulación
+            acumulado = {};
+
             for (let i = 0; i < coincidenciasEncontradas.length; i++) {
                 const coincidencia = coincidenciasEncontradas[i];
                 const [quiniela, resultado, aciertos] = coincidencia.split('|');
                 const tr = document.createElement('tr');
+
+                // Agregar una celda para mostrar el total de quinielas con este número de aciertos
+                const tdTotal = document.createElement('td');
+                if (acumulado[aciertos]) {
+                    acumulado[aciertos]++;
+                } else {
+                    acumulado[aciertos] = 1;
+                }
+                tdTotal.textContent = `${acumulado[aciertos]} quinielas con ${aciertos} aciertos`;
+                tr.appendChild(tdTotal);
+
+                // Agregar las demás celdas
                 const tdQuiniela = document.createElement('td');
                 tdQuiniela.textContent = quiniela;
                 const tdResultado = document.createElement('td');
                 tdResultado.textContent = resultado;
                 const tdAciertos = document.createElement('td');
                 tdAciertos.textContent = aciertos;
+
                 tr.appendChild(tdQuiniela);
                 tr.appendChild(tdResultado);
                 tr.appendChild(tdAciertos);
+
                 coincidenciasList.appendChild(tr);
             }
-
         }
 
-function mostrarDatosArchivo(clave) {
-    const datosArchivoDiv = document.getElementById('datosArchivo');
-    const datos = JSON.parse(localStorage.getItem(clave));
-    datosArchivoDiv.innerHTML = JSON.stringify(datos, null, 2);
-buscarCoincidenciasEnArchivo(patrones,clave);
-}
-        function buscarCoincidenciasEnArchivo(patrones,clave) {
-          const patronesInput = document.getElementById('patrones');
+        function mostrarDatosArchivo(clave) {
+            const datosArchivoDiv = document.getElementById('datosArchivo');
+            const datos = JSON.parse(localStorage.getItem(clave));
+            datosArchivoDiv.innerHTML = JSON.stringify(datos, null, 2);
+            buscarCoincidenciasEnArchivo(patrones, clave);
+        }
+
+        function buscarCoincidenciasEnArchivo(patrones, clave) {
+            const patronesInput = document.getElementById('patrones');
             const patronesTexto = patronesInput.value;
 
             // Dividir los patrones en un arreglo
             const patronesBusqueda = patronesTexto.split(',').map(patron => patron.trim());
 
-            const datos = [ "1, X, 1, 1, 1, 2, 2, 2, 2, X, 1, X, X, 2",
+            const datos = JSON.parse(localStorage.getItem(clave));;
+            // Aquí puedes cargar el archivo JSON y buscar coincidencias en los
+                      datos = [ "1, X, 1, 1, 1, 2, 2, 2, 2, X, 1, X, X, 2",
   "1, 1, 1, 1, X, 1, 1, 2, 2, 1, 1, 1, 1, 1",
   "X, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1",
   "1, 1, X, 1, X, 1, 1, 2, 2, X, 1, X, 1, X",
@@ -171,10 +193,8 @@ buscarCoincidenciasEnArchivo(patrones,clave);
   "1, X, X, 1, X, 1, X, 2, 1, 1, X, 2, 2, 2",
   "1, X, 1, 1, 2, 1, X, 1, 2, X, 2, 2, 2, 1",
   "1, 2, 1, 1, X, 1, 1, 1, X, 1, 1, X, 1, 1",
-  "1, 1, 1, 1, X, 2, 1, 2, 2, 1, 1, 2, 1, 2"]
-            // Aquí puedes cargar el archivo JSON y buscar coincidencias en los resultados
-          var resultados = datos;
-          
+  "1, 1, 1, 1, X, 2, 1, 2, 2, 1, 1, 2, 1, 2"];
+            var resultados = datos;
 
             const coincidencias = [];
 
